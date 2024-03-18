@@ -1,0 +1,48 @@
+### K-Nearest Neighbor Model Trained and Tested
+rm(list =ls())
+set.seed(1)
+
+library(kknn)
+library(readr)
+getwd()
+creditdata <- read_table("credit_card_data-headers.txt")
+
+head(creditdata, 5)
+
+randomizer<- sample(1:nrow(creditdata),as.integer(0.7*nrow(creditdata)))
+trainData = creditdata[randomizer,]
+testData = creditdata[-randomizer,]
+
+trainmodel <-train.kknn(V11~V1+V2+V3+V4+V5+V6+V7+V8+V9+V10,data = creditdata, kmax = 100,kernel = "optimal")
+plot(trainmodel)
+summary(trainmodel)
+
+predicted <- predict(mainmodel, creditdata)
+
+accuracy <-sum(round(predicted)==creditdata[,11])/nrow(creditdata)
+
+### Finding Optimal Value for K
+
+install.packages('kknn')
+install.packages('kernlab')
+library(kknn)
+library(kernlab)
+library(readr)
+data <- read_table("credit_card_data-headers.txt")
+dict <- rep(0,(nrow(data))) 
+k = .01
+for (i in 1:nrow(data))
+{
+  
+  model = kknn(data[-i, -11],
+               data[-i,1:10],
+               data[i,1:10],
+               k=k, 
+               kernel = "optimal",
+               scale = TRUE) 
+  
+  dict[i] <- as.integer(fitted(model)+0.5)
+}
+
+match = sum(dict == data[,11]) / nrow(data)
+print(match)
