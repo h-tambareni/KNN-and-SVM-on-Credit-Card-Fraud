@@ -1,4 +1,5 @@
-### K-Nearest Neighbor Model Trained and Tested
+### K-Nearest Neighbor Model Trained and Tested ###
+
 rm(list =ls())
 set.seed(1)
 
@@ -21,7 +22,7 @@ predicted <- predict(mainmodel, creditdata)
 
 accuracy <-sum(round(predicted)==creditdata[,11])/nrow(creditdata)
 
-### Finding Optimal Value for K
+### Finding Optimal Value for K ###
 
 install.packages('kknn')
 install.packages('kernlab')
@@ -46,3 +47,70 @@ for (i in 1:nrow(data))
 
 match = sum(dict == data[,11]) / nrow(data)
 print(match)
+
+### K-Fold Cross Validation ###
+
+rm(list =ls())
+set.seed(1)
+
+library(kknn)
+getwd()
+
+creditdata <- read.table("credit_card_data.txt")
+head(creditdata, 5)
+
+kknntrained <-train.kknn(V11 ~.,data = creditdata, kmax = 100,kernel = c("optimal"))
+
+plot(kknntrained)
+summary(kknntrained)
+
+predicted <- predict(kknntrained, creditdata)
+
+accuracy <-sum(round(predicted)==creditdata[,11])/nrow(creditdata)
+accuracy
+
+rm(list =ls())
+set.seed(1)
+creditdata <- read.table("credit_card_data.txt")
+head(creditdata, 5)
+
+kknn_model <- cv.kknn(V11~., creditdata, kcv = 10, k = 55, kernel = "optimal")
+
+prediction <- round(kknn_model[[1]][,2])
+sum(prediction == creditdata$V11)/nrow(creditdata)
+
+### Comparing Multiple Models using Training, Test, AND Validation ###
+
+rm(list =ls())
+library(kknn)
+set.seed(1)
+creditdata <- read.table("credit_card_data.txt", stringsAsFactors = FALSE, header = FALSE)
+
+rmcreditdata <- creditdata[sample(nrow(creditdata), replace = FALSE),]
+
+kknntrain = rmcreditdata[1:393,]
+kknnval = rmcreditdata[394:524,]
+kknntest = rmcreditdata[525:654,]
+
+kknna <- kknn(V11~., train = kknntrain, test = kknnval, k = 11, scale = TRUE, kernel = "optimal")
+kknnb <- kknn(V11~., train = kknntrain, test = kknnval, k = 9, scale = TRUE, kernel = "optimal")
+kknnc <- kknn(V11~., train = kknntrain, test = kknnval, k = 55, scale = TRUE, kernel = "optimal")
+kknnd <- kknn(V11~., train = kknntrain, test = kknnval, k = 20, scale = TRUE, kernel = "optimal")
+
+accuracya <- sum(round(fitted.values(kknna))== kknnval[,11])/nrow(kknnval)
+accuracya
+
+accuracyb <- sum(round(fitted.values(kknnb))== kknnval[,11])/nrow(kknnval)
+accuracyb
+
+accuracyc <- sum(round(fitted.values(kknnc))== kknnval[,11])/nrow(kknnval)
+accuracyc
+
+accuracyd <- sum(round(fitted.values(kknnd))== kknnval[,11])/nrow(kknnval)
+accuracyd
+
+kknntest_data <- kknn(V11~., kknntrain, kknntest, k = 11, scale = TRUE, kernel = "optimal")
+accuracytest <- sum(round(fitted.values(kknntest_data))== kknntest[,11])/nrow(kknntest)
+accuracytest
+
+### Final Accuracy = 87.69% on Validation Set ###
